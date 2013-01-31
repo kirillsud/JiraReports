@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>VOA release notes</name>
+    <groupId>com.exigenservices.voa</groupId>
+    <artifactId>release_notes</artifactId>
+    <version>0.1</version>
+    <inceptionYear>2013</inceptionYear>
+    <description>Tool to get release notes from SVN commits</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <currentYear>2013</currentYear>
+        <mainClass>${project.groupId}.${project.artifactId}.Main</mainClass>
+        <buildNumber>0</buildNumber>
+    </properties>
+
+    <!-- Company information -->
+    <organization>
+        <name>Exigen Services</name>
+        <url>http://exigenservices.com</url>
+    </organization>
+
+    <repositories>
+        <repository>
+            <id>atlassian-public</id>
+            <url>https://m2proxy.atlassian.com/repository/public</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.tmatesoft.svnkit</groupId>
+            <artifactId>svnkit</artifactId>
+            <version>1.7.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.atlassian.jira</groupId>
+            <artifactId>jira-rest-java-client</artifactId>
+            <version>1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-bundle</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-apache-client</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-multipart</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
+            <artifactId>oauth-client</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
+            <artifactId>oauth-server</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
+            <artifactId>oauth-signature</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+            <version>1.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>com.springsource.org.apache.commons.cli</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+    </dependencies>
+
+    <!-- Build configuration -->
+    <build>
+        <defaultGoal>clean install</defaultGoal>
+
+        <!-- Resources to include -->
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <targetPath>resources</targetPath>
+                <filtering>false</filtering>
+                <includes>
+                    <include>*</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <!-- Build plugins -->
+        <plugins>
+            <!-- Source compiler plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <compilerArguments>
+                        <O>-Xlint:all</O>
+                        <O>-Xlint:-path</O>
+                    </compilerArguments>
+                    <showWarnings>true</showWarnings>
+                    <showDeprecation>true</showDeprecation>
+                </configuration>
+            </plugin>
+
+            <!-- JAR creation plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${mainClass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Dependency addition plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.txt</exclude>
+                                        <exclude>META-INF/info.xml</exclude>
+                                        <exclude>META-INF/ASL2.0</exclude>
+                                        <exclude>META-INF/LICENSE</exclude>
+                                        <exclude>META-INF/NOTICE</exclude>
+                                        <exclude>META-INF/*.default</exclude>
+                                        <exclude>META-INF/jersey-module-version</exclude>
+                                        <exclude>*.build</exclude>
+                                        <exclude>*.build.properties</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
