@@ -14,7 +14,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <currentYear>2013</currentYear>
-        <mainClass>${project.groupId}.${project.artifactId}.Main</mainClass>
+        <mainClass>${project.groupId}.releaseNotes.Main</mainClass>
         <buildNumber>0</buildNumber>
     </properties>
 
