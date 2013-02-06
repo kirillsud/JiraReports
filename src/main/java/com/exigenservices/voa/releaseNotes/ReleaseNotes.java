@@ -19,6 +19,12 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     private Properties properties = new Properties();
     private CommandLineParser parser = new GnuParser();
 
+    private int outputFormat = FORMAT_TEXT;
+
+    public static final int FORMAT_TEXT     = 1;
+    public static final int FORMAT_CSV      = 2;
+    public static final int FORMAT_SEMICOLON = 3;
+
     public ReleaseNotes() {
         initDefaultDate();
         initCommandLineOptions();
@@ -161,6 +167,14 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             setDaysBefore(count);
         }
 
+        if (line.hasOption('c')) {
+            outputFormat = FORMAT_CSV;
+        }
+
+        if (line.hasOption('e')) {
+            outputFormat = FORMAT_SEMICOLON;
+        }
+
         return true;
     }
 
@@ -176,6 +190,8 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         options.addOption("j", "jira", true, "jira url");
         options.addOption("a", "authors", true, "authors to filter");
         options.addOption("d", "days", true, "days delay before current");
+        options.addOption("c", "csv", false, "display in csv format");
+        options.addOption("e", "semicolon", false, "display in csv format, separated by semicolon");
     }
 
     @Override
@@ -205,6 +221,10 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
 
     public Map<String, IssueNote> getNotes() {
         return notes;
+    }
+
+    public int getOutputFormat() {
+        return outputFormat;
     }
 }
 

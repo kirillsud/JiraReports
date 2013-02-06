@@ -100,6 +100,7 @@ public class Main {
         );
 
         // establishing connection to JIRA
+        // @todo: move jira and output logic into ReleaseNotes class
         URI jiraURI = new URI(jiraUrlString);
         AuthenticationHandler authenticationHandler = new BasicHttpAuthenticationHandler(login, password);
         JiraRestClient jiraClient = new JerseyJiraRestClient(jiraURI, authenticationHandler);
@@ -108,30 +109,43 @@ public class Main {
         for (String key : releaseNotes.getNotes().keySet()) {
             IssueNote note = releaseNotes.getNotes().get(key);
 
-            String comment;
+            String comment = note.getComment();
+
             // @todo: add analyzing of subtask (issue.getType().isSubtask())
-            try {
-                // try to get note comment from JIRA
-                Issue issue = jiraClient.getIssueClient().getIssue(key, new NullProgressMonitor());
 
-                comment = issue.getSummary();
+            if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_TEXT) {
+                try {
+                    // try to get note comment from JIRA
+                    Issue issue = jiraClient.getIssueClient().getIssue(key, new NullProgressMonitor());
 
-                // if it is a bug, check for fixed words in the beginning
-                if (issue.getIssueType().getName().toLowerCase().equals("bug")) {
-                    // if it doesn't starts from fixed, make it
-                    if (!comment.toLowerCase().startsWith("fixed")) {
-                        comment = "Fixed " + comment.substring(0, 1).toLowerCase() + comment.substring(1);
+                    comment = issue.getSummary();
+
+                    // if it is a bug, check for fixed words in the beginning
+                    if (issue.getIssueType().getName().toLowerCase().equals("bug")) {
+                        // if it doesn't starts from fixed, make it
+                        if (!comment.toLowerCase().startsWith("fixed")) {
+                            comment = "Fixed " + comment.substring(0, 1).toLowerCase() + comment.substring(1);
+                        }
                     }
-                }
-            } catch (Exception e) {
-                // if we couldn't, leave it original from note
-                comment = note.getComment();
+                } catch (Exception e) {}
             }
 
             // and finally make first letter uppercase (because it's beautifully, yes?)
             comment = comment.substring(0, 1).toUpperCase() + comment.substring(1);
+            String csvDelimiter = ",";
 
-            System.out.println("[" + key + "] " + comment);
+            switch (releaseNotes.getOutputFormat()) {
+                case ReleaseNotes.FORMAT_TEXT:
+                    System.out.println("[" + key + "] " + comment);
+                    break;
+
+                case ReleaseNotes.FORMAT_SEMICOLON:
+                    csvDelimiter = ";";
+
+                case ReleaseNotes.FORMAT_CSV:
+                    System.out.println(key + csvDelimiter + "\"" + comment + "\"" + csvDelimiter + note.getAuthor());
+                    break;
+            }
         }
     }
 }
