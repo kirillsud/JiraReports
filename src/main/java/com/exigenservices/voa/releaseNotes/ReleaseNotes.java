@@ -27,12 +27,19 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     }
 
     private void initDefaultDate() {
+        setDaysBefore(1);
+    }
+
+    /**
+     * Set start date for commits on count days before current day and time
+     *
+     * @param count days before
+     */
+    public void setDaysBefore(int count) {
         // get 1 day ago date
         Calendar releaseNotesStartDate = Calendar.getInstance();
         releaseNotesStartDate.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
-        releaseNotesStartDate.set(Calendar.HOUR_OF_DAY, 13);
-        releaseNotesStartDate.set(Calendar.MINUTE, 30);
-        releaseNotesStartDate.add(Calendar.DATE, -1);
+        releaseNotesStartDate.add(Calendar.DATE, -count);
 
         // check is it holiday
         int dayOfWeek = releaseNotesStartDate.get(Calendar.DAY_OF_WEEK);
@@ -140,6 +147,17 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             properties.setProperty("authors", line.getOptionValue('a'));
         }
 
+        if (line.getOptionValue('d') != null) {
+            int count = 1;
+            try {
+                count = Integer.parseInt(line.getOptionValue('d'));
+            } catch (NumberFormatException e) {
+                throw new ParseException("Wrong days delay option format");
+            }
+
+            setDaysBefore(count);
+        }
+
         return true;
     }
 
@@ -154,6 +172,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         options.addOption("s", "svn", true, "svn url");
         options.addOption("j", "jira", true, "jira url");
         options.addOption("a", "authors", true, "authors to filter");
+        options.addOption("d", "days", true, "days delay before current");
     }
 
     @Override
