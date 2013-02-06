@@ -15,6 +15,8 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.Console;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws SVNException, URISyntaxException {
@@ -38,8 +40,29 @@ public class Main {
         jiraUrlString = releaseNotes.getJiraURL();
 
         // check login and etc.
-        if (login.isEmpty() || svnUrlString.isEmpty() || jiraUrlString.isEmpty()) {
-            System.out.println("ERROR: Please, specify required parameters\n");
+        List<String> emptyParametersList = new ArrayList<String>();
+        if (login.isEmpty()) {
+            emptyParametersList.add("login");
+        }
+
+        if (svnUrlString.isEmpty()) {
+            emptyParametersList.add("SVN URL");
+        }
+
+        if (jiraUrlString.isEmpty()) {
+            emptyParametersList.add("Jira URL");
+        }
+
+        if (!emptyParametersList.isEmpty()) {
+            // join all params
+            String params = "";
+            for (String param : emptyParametersList) {
+                params += ", " + param;
+            }
+            params = params.substring(2);
+
+            // print message
+            System.out.println("ERROR: Please, specify required parameters: " + params + "\n");
             releaseNotes.printCommandLineHelp();
             return;
         }
