@@ -12,7 +12,7 @@ import java.util.*;
 
 public class ReleaseNotes implements ISVNLogEntryHandler {
     private Map<String, IssueNote> notes = new HashMap<String, IssueNote>();
-    private Set<String> authors;
+    private Set<String> authors = new HashSet<String>();
     private Date startDate;
 
     private Options options = new Options();
@@ -23,7 +23,10 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         initDefaultDate();
         initCommandLineOptions();
         loadConfig();
-        setAuthors(properties.getProperty("authors").split(","));
+
+        if (properties.getProperty("authors") != null) {
+            setAuthors(properties.getProperty("authors").split(","));
+        }
     }
 
     private void initDefaultDate() {
@@ -148,7 +151,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         }
 
         if (line.getOptionValue('d') != null) {
-            int count = 1;
+            int count;
             try {
                 count = Integer.parseInt(line.getOptionValue('d'));
             } catch (NumberFormatException e) {
@@ -183,7 +186,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         }
 
         // filter by author
-        if (!authors.contains(svnLogEntry.getAuthor())) {
+        if (authors.size() > 0 && !authors.contains(svnLogEntry.getAuthor())) {
             return;
         }
 
