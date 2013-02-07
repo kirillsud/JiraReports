@@ -123,9 +123,10 @@ public class Main {
 
                 // @todo: add analyzing of subtask (issue.getType().isSubtask())
 
-                if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_TEXT) {
-                    comment = issue.getSummary();
+                comment = issue.getSummary();
 
+                // for simple text format we will do some special actions
+                if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_TEXT) {
                     // if it is a bug, check for fixed words in the beginning
                     if (issue.getIssueType().getName().toLowerCase().equals("bug")) {
                         // if it doesn't starts from fixed, make it
