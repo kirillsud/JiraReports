@@ -111,13 +111,19 @@ public class Main {
 
             String comment = note.getComment();
 
-            // @todo: add analyzing of subtask (issue.getType().isSubtask())
+            // try to get note comment from JIRA
+            try {
+                Issue issue = jiraClient.getIssueClient().getIssue(key, new NullProgressMonitor());
 
-            if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_TEXT) {
-                try {
-                    // try to get note comment from JIRA
-                    Issue issue = jiraClient.getIssueClient().getIssue(key, new NullProgressMonitor());
+                // pass not resolved
+                if (!issue.getStatus().getName().equalsIgnoreCase("resolved")
+                        && !issue.getStatus().getName().equalsIgnoreCase("closed")) {
+                    continue;
+                }
 
+                // @todo: add analyzing of subtask (issue.getType().isSubtask())
+
+                if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_TEXT) {
                     comment = issue.getSummary();
 
                     // if it is a bug, check for fixed words in the beginning
@@ -127,8 +133,8 @@ public class Main {
                             comment = "Fixed " + comment.substring(0, 1).toLowerCase() + comment.substring(1);
                         }
                     }
-                } catch (Exception e) {}
-            }
+                }
+            } catch (Exception e) {}
 
             // and finally make first letter uppercase (because it's beautifully, yes?)
             comment = comment.substring(0, 1).toUpperCase() + comment.substring(1);
