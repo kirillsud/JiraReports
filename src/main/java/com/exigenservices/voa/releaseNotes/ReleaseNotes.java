@@ -19,11 +19,11 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     private Properties properties = new Properties();
     private CommandLineParser parser = new GnuParser();
 
-    private int outputFormat = FORMAT_TEXT;
+    private int outputFormat = FORMAT_NOTES;
 
-    public static final int FORMAT_TEXT     = 1;
+    public static final int FORMAT_NOTES    = 1;
     public static final int FORMAT_CSV      = 2;
-    public static final int FORMAT_SEMICOLON = 3;
+    public static final int FORMAT_SSV      = 3;
 
     public ReleaseNotes() {
         initDefaultDate();
@@ -172,7 +172,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         }
 
         if (line.hasOption('e')) {
-            outputFormat = FORMAT_SEMICOLON;
+            outputFormat = FORMAT_SSV;
         }
 
         return true;
@@ -190,8 +190,12 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         options.addOption("j", "jira", true, "jira url");
         options.addOption("a", "authors", true, "authors to filter");
         options.addOption("d", "days", true, "days delay before current");
-        options.addOption("c", "csv", false, "display in csv format");
-        options.addOption("e", "semicolon", false, "display in csv format, separated by semicolon");
+        options.addOption("f", "format", true, "output format:\n" +
+                "NOTES - it's default format, for release notes: [<JIRA_KEY>] <Jira summary>\n" +
+                "CVS - comma separated values: <jira key>,<jira summary>,<author>\n" +
+                "SVS - semicolon separated values: <jira key>;<jira summary>;<author>\n" +
+                "REPORT - work log report in wiki format\n" +
+                "");
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.atlassian.jira.rest.client.AuthenticationHandler;
 import com.atlassian.jira.rest.client.JiraRestClient;
 import com.atlassian.jira.rest.client.NullProgressMonitor;
 import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
+import com.atlassian.jira.rest.client.domain.BasicResolution;
 import com.atlassian.jira.rest.client.domain.Issue;
 import com.atlassian.jira.rest.client.internal.jersey.JerseyJiraRestClient;
 import org.apache.commons.cli.*;
@@ -116,9 +117,9 @@ public class Main {
             try {
                 Issue issue = jiraClient.getIssueClient().getIssue(key, new NullProgressMonitor());
 
-                // pass not resolved
-                if (!issue.getStatus().getName().equalsIgnoreCase("resolved")
-                        && !issue.getStatus().getName().equalsIgnoreCase("closed")) {
+                // pass not fixed issues
+                BasicResolution resolution = issue.getResolution();
+                if (resolution == null || !resolution.getName().equalsIgnoreCase("fixed")) {
                     continue;
                 }
 
@@ -127,7 +128,7 @@ public class Main {
                 comment = issue.getSummary();
 
                 // for simple text format we will do some special actions
-                if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_TEXT) {
+                if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_NOTES) {
                     // if it is a bug, check for fixed words in the beginning
                     if (issue.getIssueType().getName().toLowerCase().equals("bug")) {
                         // if it doesn't starts from fixed, make it
@@ -136,18 +137,21 @@ public class Main {
                         }
                     }
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
 
             // and finally make first letter uppercase (because it's beautifully, yes?)
             comment = comment.substring(0, 1).toUpperCase() + comment.substring(1);
             String csvDelimiter = ",";
 
             switch (releaseNotes.getOutputFormat()) {
-                case ReleaseNotes.FORMAT_TEXT:
+                case ReleaseNotes.FORMAT_NOTES:
                     System.out.println("[" + key + "] " + comment);
                     break;
 
-                case ReleaseNotes.FORMAT_SEMICOLON:
+                case ReleaseNotes.FORMAT_SSV:
                     csvDelimiter = ";";
 
                 case ReleaseNotes.FORMAT_CSV:
