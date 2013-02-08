@@ -77,6 +77,7 @@ public class Main {
             }
 
             password = new String(console.readPassword("Password: "));
+            releaseNotes.setPassword(password);
         }
 
         // initialize svn client

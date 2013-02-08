@@ -226,5 +226,9 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     public int getOutputFormat() {
         return outputFormat;
     }
+
+    public void setPassword(String password) {
+        properties.setProperty("password", password);
+    }
 }
 
