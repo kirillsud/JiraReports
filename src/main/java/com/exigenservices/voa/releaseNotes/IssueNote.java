@@ -1,13 +1,16 @@
 package com.exigenservices.voa.releaseNotes;
 
+import com.atlassian.jira.rest.client.domain.Issue;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import java.util.Date;
 
 public class IssueNote {
-    private String author;
-    private String key;
+    private final String key;
+
     private String comment;
+    private String author;
     private Date date;
+    private Issue jiraIssue;
 
     IssueNote(String author, String key, String comment, Date date) {
         this.author = author;
@@ -61,6 +64,14 @@ public class IssueNote {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public void setJiraIssue(Issue jiraIssue) {
+        this.jiraIssue = jiraIssue;
+    }
+
+    public Issue getJiraIssue() {
+        return jiraIssue;
     }
 }
 

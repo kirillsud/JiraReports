@@ -1,13 +1,23 @@
 package com.exigenservices.voa.releaseNotes;
 
+import com.atlassian.jira.rest.client.AuthenticationHandler;
+import com.atlassian.jira.rest.client.JiraRestClient;
+import com.atlassian.jira.rest.client.NullProgressMonitor;
+import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
+import com.atlassian.jira.rest.client.domain.BasicResolution;
+import com.atlassian.jira.rest.client.domain.Issue;
+import com.atlassian.jira.rest.client.internal.jersey.JerseyJiraRestClient;
+import com.exigenservices.voa.releaseNotes.printers.Printer;
+
+import com.exigenservices.voa.releaseNotes.printers.TextNotesPrinter;
 import org.apache.commons.cli.*;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class ReleaseNotes implements ISVNLogEntryHandler {
@@ -19,20 +29,30 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     private Properties properties = new Properties();
     private CommandLineParser parser = new GnuParser();
 
-    private int outputFormat = FORMAT_NOTES;
+    private JiraRestClient jiraClient;
 
-    public static final int FORMAT_NOTES    = 1;
-    public static final int FORMAT_CSV      = 2;
-    public static final int FORMAT_SSV      = 3;
+    private Printer printer;
+    private Map<String, Printer> printers;
 
     public ReleaseNotes() {
         initDefaultDate();
+        initPrinters();
         initCommandLineOptions();
         loadConfig();
 
         if (properties.getProperty("authors") != null) {
             setAuthors(properties.getProperty("authors").split(","));
         }
+    }
+
+    private void initPrinters() {
+        printers = new HashMap<String, Printer>();
+        ServiceLoader<Printer> printersSet = ServiceLoader.load(Printer.class);
+        for (Printer printer : printersSet) {
+            printers.put(printer.getName(), printer);
+        }
+
+        printer = new TextNotesPrinter();
     }
 
     private void initDefaultDate() {
@@ -167,12 +187,13 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             setDaysBefore(count);
         }
 
-        if (line.hasOption('c')) {
-            outputFormat = FORMAT_CSV;
-        }
+        if (line.getOptionValue('f') != null) {
+            String format = line.getOptionValue('f');
+            if (!printers.containsKey(format)) {
+                throw new ParseException("Wrong output format");
+            }
 
-        if (line.hasOption('e')) {
-            outputFormat = FORMAT_SSV;
+            printer = printers.get(format);
         }
 
         return true;
@@ -183,19 +204,20 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
      */
     public void initCommandLineOptions() {
         options = new Options();
-
         options.addOption("p", "password", true, "your password in workspace domain");
         options.addOption("l", "login", true, "your login in workspace domain");
         options.addOption("s", "svn", true, "svn url");
         options.addOption("j", "jira", true, "jira url");
         options.addOption("a", "authors", true, "authors to filter");
         options.addOption("d", "days", true, "days delay before current");
-        options.addOption("f", "format", true, "output format:\n" +
-                "NOTES - it's default format, for release notes: [<JIRA_KEY>] <Jira summary>\n" +
-                "CVS - comma separated values: <jira key>,<jira summary>,<author>\n" +
-                "SVS - semicolon separated values: <jira key>;<jira summary>;<author>\n" +
-                "REPORT - work log report in wiki format\n" +
-                "");
+
+        // generate list of output formats
+        String formats = "";
+        for (String printerName : printers.keySet()) {
+            formats += printerName + " - " + printers.get(printerName).getDescription() + "\n";
+        }
+
+        options.addOption("f", "format", true, "output format:\n" + formats);
     }
 
     @Override
@@ -220,6 +242,24 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             return;
         }
 
+        // load jira data about issue
+        Issue issue;
+        try {
+            issue = getJiraClient().getIssueClient().getIssue(note.getKey(), new NullProgressMonitor());
+        } catch (URISyntaxException e) {
+            return;
+        }
+
+        // pass not fixed issues
+        BasicResolution resolution = issue.getResolution();
+        if (resolution == null || !resolution.getName().equalsIgnoreCase("fixed")) {
+            return;
+        }
+
+        // @todo: add analyzing of subtask (issue.getType().isSubtask())
+
+        note.setJiraIssue(issue);
+
         notes.put(note.getKey(), note);
     }
 
@@ -227,12 +267,38 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         return notes;
     }
 
-    public int getOutputFormat() {
-        return outputFormat;
-    }
-
     public void setPassword(String password) {
         properties.setProperty("password", password);
+    }
+
+    public JiraRestClient getJiraClient() throws URISyntaxException {
+        if (jiraClient == null) {
+            // establishing connection to JIRA
+            URI jiraURI = new URI(properties.getProperty("jira.url"));
+            AuthenticationHandler authenticationHandler = new BasicHttpAuthenticationHandler(
+                    properties.getProperty("login"), properties.getProperty("password")
+            );
+
+            jiraClient = new JerseyJiraRestClient(jiraURI, authenticationHandler);
+
+            // @todo: check established connection
+        }
+
+        return jiraClient;
+    }
+
+    public boolean resetJiraClient() {
+        jiraClient = null;
+        try {
+            getJiraClient();
+        } catch (URISyntaxException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public void print(OutputStream out) {
+        printer.print(out, this);
     }
 }
 

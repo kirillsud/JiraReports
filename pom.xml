@@ -113,6 +113,15 @@
                     <include>*</include>
                 </includes>
             </resource>
+
+            <resource>
+                <directory>${project.basedir}/META-INF</directory>
+                <targetPath>META-INF</targetPath>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
         </resources>
 
         <!-- Build plugins -->

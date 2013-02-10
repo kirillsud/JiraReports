@@ -1,12 +1,5 @@
 package com.exigenservices.voa.releaseNotes;
 
-import com.atlassian.jira.rest.client.AuthenticationHandler;
-import com.atlassian.jira.rest.client.JiraRestClient;
-import com.atlassian.jira.rest.client.NullProgressMonitor;
-import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
-import com.atlassian.jira.rest.client.domain.BasicResolution;
-import com.atlassian.jira.rest.client.domain.Issue;
-import com.atlassian.jira.rest.client.internal.jersey.JerseyJiraRestClient;
 import org.apache.commons.cli.*;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -14,13 +7,13 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.Console;
-import java.net.URI;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) throws SVNException, URISyntaxException {
+    public static void main(String[] args) throws SVNException, URISyntaxException, IOException {
         // initialize login and password
         String login, password, svnUrlString, jiraUrlString;
 
@@ -79,8 +72,17 @@ public class Main {
 
             password = new String(console.readPassword("Password: "));
             releaseNotes.setPassword(password);
+
         }
 
+        // check jira connection
+        // @todo: move it to ReleaseNotes
+        if (!releaseNotes.resetJiraClient()) {
+            System.out.println("ERROR: Couldn't connect to JIRA. Please check login, password or JIRA URL");
+            return;
+        }
+
+        // @todo: move it to ReleaseNotes
         // initialize svn client
         SVNURL svnURL = SVNURL.parseURIEncoded(svnUrlString);
         ISVNOptions svnOptions = SVNWCUtil.createDefaultOptions(true);
@@ -101,63 +103,17 @@ public class Main {
                 releaseNotes
         );
 
-        // establishing connection to JIRA
-        // @todo: move jira and output logic into ReleaseNotes class
-        URI jiraURI = new URI(jiraUrlString);
-        AuthenticationHandler authenticationHandler = new BasicHttpAuthenticationHandler(login, password);
-        JiraRestClient jiraClient = new JerseyJiraRestClient(jiraURI, authenticationHandler);
-
         // output logs
-        for (String key : releaseNotes.getNotes().keySet()) {
-            IssueNote note = releaseNotes.getNotes().get(key);
-
-            String comment = note.getComment();
-
-            // try to get note comment from JIRA
-            try {
-                Issue issue = jiraClient.getIssueClient().getIssue(key, new NullProgressMonitor());
-
-                // pass not fixed issues
-                BasicResolution resolution = issue.getResolution();
-                if (resolution == null || !resolution.getName().equalsIgnoreCase("fixed")) {
-                    continue;
-                }
-
-                // @todo: add analyzing of subtask (issue.getType().isSubtask())
-
-                comment = issue.getSummary();
-
-                // for simple text format we will do some special actions
-                if (releaseNotes.getOutputFormat() == ReleaseNotes.FORMAT_NOTES) {
-                    // if it is a bug, check for fixed words in the beginning
-                    if (issue.getIssueType().getName().toLowerCase().equals("bug")) {
-                        // if it doesn't starts from fixed, make it
-                        if (!comment.toLowerCase().startsWith("fixed")) {
-                            comment = "Fixed " + comment.substring(0, 1).toLowerCase() + comment.substring(1);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                return;
-            }
-
-            // and finally make first letter uppercase (because it's beautifully, yes?)
-            comment = comment.substring(0, 1).toUpperCase() + comment.substring(1);
-            String csvDelimiter = ",";
-
-            switch (releaseNotes.getOutputFormat()) {
-                case ReleaseNotes.FORMAT_NOTES:
-                    System.out.println("[" + key + "] " + comment);
-                    break;
-
-                case ReleaseNotes.FORMAT_SSV:
-                    csvDelimiter = ";";
-
-                case ReleaseNotes.FORMAT_CSV:
-                    System.out.println(key + csvDelimiter + "\"" + comment + "\"" + csvDelimiter + note.getAuthor());
-                    break;
-            }
-        }
+        releaseNotes.print(System.out);
+        System.out.flush();
+//            switch (releaseNotes.getOutputFormat()) {
+//                case ReleaseNotes.FORMAT_SSV:
+//                    csvDelimiter = ";";
+//
+//                case ReleaseNotes.FORMAT_CSV:
+//                    System.out.println(key + csvDelimiter + "\"" + comment + "\"" + csvDelimiter + note.getAuthor());
+//                    break;
+//            }
+//        }
     }
 }
