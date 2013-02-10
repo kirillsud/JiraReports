@@ -4,22 +4,22 @@ import com.atlassian.jira.rest.client.domain.Issue;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import java.util.Date;
 
-public class IssueNote {
+public class ReleaseNote {
     private final String key;
 
     private String comment;
     private String author;
     private Date date;
-    private Issue jiraIssue;
+    private Issue issue;
 
-    IssueNote(String author, String key, String comment, Date date) {
+    public ReleaseNote(String author, String key, String comment, Date date) {
         this.author = author;
         this.key = key;
         this.comment = comment;
         this.date = date;
     }
 
-    public static IssueNote parseSVNLog(SVNLogEntry entry) {
+    public static ReleaseNote parseSVNLog(SVNLogEntry entry) {
         String[] messageParts = entry.getMessage().split(" ", 2);
 
         if (messageParts.length < 2) {
@@ -39,7 +39,7 @@ public class IssueNote {
             return null;
         }
 
-        return new IssueNote(entry.getAuthor(), key, comment, entry.getDate());
+        return new ReleaseNote(entry.getAuthor(), key, comment, entry.getDate());
     }
 
     public String getKey() {
@@ -66,12 +66,12 @@ public class IssueNote {
         this.date = date;
     }
 
-    public void setJiraIssue(Issue jiraIssue) {
-        this.jiraIssue = jiraIssue;
+    public void setIssue(Issue issue) {
+        this.issue = issue;
     }
 
-    public Issue getJiraIssue() {
-        return jiraIssue;
+    public Issue getIssue() {
+        return issue;
     }
 }
 

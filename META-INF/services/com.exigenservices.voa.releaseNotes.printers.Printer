@@ -1,3 +1,4 @@
 com.exigenservices.voa.releaseNotes.printers.TextNotesPrinter
 com.exigenservices.voa.releaseNotes.printers.CsvPrinter
 com.exigenservices.voa.releaseNotes.printers.SsvPrinter
+com.exigenservices.voa.releaseNotes.printers.ReportPrinter
