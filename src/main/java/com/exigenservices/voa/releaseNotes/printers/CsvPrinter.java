@@ -1,6 +1,6 @@
 package com.exigenservices.voa.releaseNotes.printers;
 
-import com.exigenservices.voa.releaseNotes.IssueNote;
+import com.exigenservices.voa.releaseNotes.ReleaseNote;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -8,9 +8,9 @@ import java.io.IOException;
 public class CsvPrinter extends AbstractPrinter {
 
     @Override
-    protected boolean filterNote(IssueNote note) {
+    protected boolean filterNote(ReleaseNote note) {
         // filter only bugs
-        if (!note.getJiraIssue().getIssueType().getName().equalsIgnoreCase("bug")) {
+        if (!note.getIssue().getIssueType().getName().equalsIgnoreCase("bug")) {
             return false;
         }
 
@@ -18,9 +18,9 @@ public class CsvPrinter extends AbstractPrinter {
     }
 
     @Override
-    protected void printNote(BufferedWriter writer, IssueNote note) throws IOException {
+    protected void printNote(BufferedWriter writer, ReleaseNote note) throws IOException {
         writer.write(note.getKey() + getDelimiter() +
-                "\"" + note.getJiraIssue().getSummary() + "\"" + getDelimiter() +
+                "\"" + note.getIssue().getSummary() + "\"" + getDelimiter() +
                 note.getAuthor() + getDelimiter() +
                 note.getDate() +
                 "\n"

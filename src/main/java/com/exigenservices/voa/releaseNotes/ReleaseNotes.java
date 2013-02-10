@@ -14,6 +14,12 @@ import org.apache.commons.cli.*;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.*;
 import java.net.URI;
@@ -21,7 +27,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 public class ReleaseNotes implements ISVNLogEntryHandler {
-    private Map<String, IssueNote> notes = new HashMap<String, IssueNote>();
+    private Map<String, ReleaseNote> notes = new HashMap<String, ReleaseNote>();
     private Set<String> authors = new HashSet<String>();
     private Date startDate;
 
@@ -232,7 +238,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             return;
         }
 
-        IssueNote note = IssueNote.parseSVNLog(svnLogEntry);
+        ReleaseNote note = ReleaseNote.parseSVNLog(svnLogEntry);
         if (note == null) {
             return;
         }
@@ -258,12 +264,39 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
 
         // @todo: add analyzing of subtask (issue.getType().isSubtask())
 
-        note.setJiraIssue(issue);
+        note.setIssue(issue);
 
         notes.put(note.getKey(), note);
     }
 
-    public Map<String, IssueNote> getNotes() {
+    /**
+     * Load commits from SVN for selected date period
+     * and filter it by author and other requirements
+     *
+     * @return list of commits
+     * @throws SVNException
+     */
+    public Map<String, ReleaseNote> getCommits() throws SVNException {
+        // initialize svn client
+        SVNURL svnURL = SVNURL.parseURIEncoded(properties.getProperty("svn.url"));
+        ISVNOptions svnOptions = SVNWCUtil.createDefaultOptions(true);
+        ISVNAuthenticationManager svnAuthenticationManager = SVNWCUtil.createDefaultAuthenticationManager(
+                properties.getProperty("login"), properties.getProperty("password"));
+
+        // get logs
+        SVNClientManager clientManager = SVNClientManager.newInstance(svnOptions, svnAuthenticationManager);
+        clientManager.getLogClient().doLog(
+                svnURL,
+                new String[]{},
+                SVNRevision.create(this.getStartDate()),
+                SVNRevision.create(this.getStartDate()),
+                SVNRevision.HEAD,
+                true,
+                true,
+                100,
+                this
+        );
+
         return notes;
     }
 
@@ -299,6 +332,10 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
 
     public void print(OutputStream out) {
         printer.print(out, this);
+    }
+
+    public Set<String> getAuthors() {
+        return authors;
     }
 }
 

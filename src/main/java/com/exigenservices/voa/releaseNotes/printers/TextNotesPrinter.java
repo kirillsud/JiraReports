@@ -1,6 +1,6 @@
 package com.exigenservices.voa.releaseNotes.printers;
 
-import com.exigenservices.voa.releaseNotes.IssueNote;
+import com.exigenservices.voa.releaseNotes.ReleaseNote;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -8,14 +8,14 @@ import java.io.IOException;
 public class TextNotesPrinter extends AbstractPrinter {
 
     @Override
-    protected void printNote(BufferedWriter writer, IssueNote note) throws IOException {
+    protected void printNote(BufferedWriter writer, ReleaseNote note) throws IOException {
         writer.write("[" + note.getKey() + "] " + prepareComment(note) + "\n");
     }
 
     @Override
-    protected String prepareComment(String comment, IssueNote note) {
+    protected String prepareComment(String comment, ReleaseNote note) {
         // preparation for bug comments
-        if (note.getJiraIssue().getIssueType().getName().equalsIgnoreCase("bug")) {
+        if (note.getIssue().getIssueType().getName().equalsIgnoreCase("bug")) {
 
             // if comment starts from "fix ", remove it
             if (comment.toLowerCase().startsWith("fix ")) {

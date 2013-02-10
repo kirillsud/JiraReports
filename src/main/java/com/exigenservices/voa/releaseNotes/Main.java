@@ -1,10 +1,6 @@
 package com.exigenservices.voa.releaseNotes;
 
 import org.apache.commons.cli.*;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.wc.*;
 
 import java.io.Console;
 import java.io.IOException;
@@ -13,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) throws SVNException, URISyntaxException, IOException {
+    public static void main(String[] args) throws URISyntaxException, IOException {
         // initialize login and password
         String login, password, svnUrlString, jiraUrlString;
 
@@ -81,27 +77,6 @@ public class Main {
             System.out.println("ERROR: Couldn't connect to JIRA. Please check login, password or JIRA URL");
             return;
         }
-
-        // @todo: move it to ReleaseNotes
-        // initialize svn client
-        SVNURL svnURL = SVNURL.parseURIEncoded(svnUrlString);
-        ISVNOptions svnOptions = SVNWCUtil.createDefaultOptions(true);
-        ISVNAuthenticationManager svnAuthenticationManager =
-                SVNWCUtil.createDefaultAuthenticationManager(login, password);
-
-        // get logs
-        SVNClientManager clientManager = SVNClientManager.newInstance(svnOptions, svnAuthenticationManager);
-        clientManager.getLogClient().doLog(
-                svnURL,
-                new String[]{},
-                SVNRevision.create(releaseNotes.getStartDate()),
-                SVNRevision.create(releaseNotes.getStartDate()),
-                SVNRevision.HEAD,
-                true,
-                true,
-                100,
-                releaseNotes
-        );
 
         // output logs
         releaseNotes.print(System.out);
