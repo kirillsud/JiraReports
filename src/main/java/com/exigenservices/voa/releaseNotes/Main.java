@@ -80,15 +80,5 @@ public class Main {
 
         // output logs
         releaseNotes.print(System.out);
-        System.out.flush();
-//            switch (releaseNotes.getOutputFormat()) {
-//                case ReleaseNotes.FORMAT_SSV:
-//                    csvDelimiter = ";";
-//
-//                case ReleaseNotes.FORMAT_CSV:
-//                    System.out.println(key + csvDelimiter + "\"" + comment + "\"" + csvDelimiter + note.getAuthor());
-//                    break;
-//            }
-//        }
     }
 }

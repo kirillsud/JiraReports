@@ -2,13 +2,8 @@ package com.exigenservices.voa.releaseNotes.printers;
 
 import com.exigenservices.voa.releaseNotes.ReleaseNote;
 import com.exigenservices.voa.releaseNotes.ReleaseNotes;
-import org.tmatesoft.svn.core.SVNException;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.URISyntaxException;
+import java.io.*;
 import java.util.Map;
 
 public abstract class AbstractPrinter implements Printer {
@@ -64,5 +59,5 @@ public abstract class AbstractPrinter implements Printer {
         return comment;
     }
 
-    protected abstract void printNote(BufferedWriter writer, ReleaseNote note) throws IOException;
+    protected abstract void printNote(Writer writer, ReleaseNote note) throws IOException;
 }

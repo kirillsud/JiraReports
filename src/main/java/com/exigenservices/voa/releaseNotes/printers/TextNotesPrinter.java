@@ -2,13 +2,13 @@ package com.exigenservices.voa.releaseNotes.printers;
 
 import com.exigenservices.voa.releaseNotes.ReleaseNote;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Writer;
 
 public class TextNotesPrinter extends AbstractPrinter {
 
     @Override
-    protected void printNote(BufferedWriter writer, ReleaseNote note) throws IOException {
+    protected void printNote(Writer writer, ReleaseNote note) throws IOException {
         writer.write("[" + note.getKey() + "] " + prepareComment(note) + "\n");
     }
 

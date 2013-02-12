@@ -4,13 +4,12 @@ import com.atlassian.jira.rest.client.AuthenticationHandler;
 import com.atlassian.jira.rest.client.JiraRestClient;
 import com.atlassian.jira.rest.client.NullProgressMonitor;
 import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
-import com.atlassian.jira.rest.client.domain.BasicResolution;
-import com.atlassian.jira.rest.client.domain.Issue;
+import com.atlassian.jira.rest.client.domain.*;
 import com.atlassian.jira.rest.client.internal.jersey.JerseyJiraRestClient;
 import com.exigenservices.voa.releaseNotes.printers.Printer;
-
 import com.exigenservices.voa.releaseNotes.printers.TextNotesPrinter;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -21,9 +20,14 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ReleaseNotes implements ISVNLogEntryHandler {
@@ -62,7 +66,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     }
 
     private void initDefaultDate() {
-        setDaysBefore(1);
+        setStartDate(getDaysBefore(1));
     }
 
     /**
@@ -70,7 +74,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
      *
      * @param count days before
      */
-    public void setDaysBefore(int count) {
+    public Date getDaysBefore(int count) {
         // get 1 day ago date
         Calendar releaseNotesStartDate = Calendar.getInstance();
         releaseNotesStartDate.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
@@ -80,15 +84,15 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         int dayOfWeek = releaseNotesStartDate.get(Calendar.DAY_OF_WEEK);
         switch (dayOfWeek) {
             case Calendar.SUNDAY:
-                releaseNotesStartDate.add(Calendar.DATE, -2);
+                releaseNotesStartDate.add(Calendar.DATE, count > 0 ? -2 : 2);
                 break;
 
             case Calendar.SATURDAY:
-                releaseNotesStartDate.add(Calendar.DATE, -1);
+                releaseNotesStartDate.add(Calendar.DATE, count > 0 ? -1 : 1);
                 break;
         }
 
-        startDate = releaseNotesStartDate.getTime();
+        return releaseNotesStartDate.getTime();
     }
 
     /**
@@ -190,7 +194,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
                 throw new ParseException("Wrong days delay option format");
             }
 
-            setDaysBefore(count);
+            setStartDate(getDaysBefore(count));
         }
 
         if (line.getOptionValue('f') != null) {
@@ -336,6 +340,78 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
 
     public Set<String> getAuthors() {
         return authors;
+    }
+
+    public List<ReleaseNote> getDoneLogs() throws URISyntaxException {
+        List<ReleaseNote> notes = new ArrayList<ReleaseNote>();
+
+        // get all updated issues after start time
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd k:m");
+        String authors = StringUtils.join(getAuthors(), ", ");
+        SearchResult result = getJiraClient().getSearchClient().searchJql(
+                String.format("updatedDate > \"%s\" AND (assignee was in (%s) OR assignee in (%s))",
+                        dateFormat.format(getStartDate()), authors, authors
+                ), new NullProgressMonitor()
+        );
+
+        for (BasicIssue basicIssue : result.getIssues()) {
+            Issue issue = getJiraClient().getIssueClient().getIssue(
+                    basicIssue.getKey(), new NullProgressMonitor());
+
+            // check for needed authors work log after start date
+            for (Worklog workLog : issue.getWorklogs()) {
+                // filter by date
+                if (workLog.getCreationDate().toDate().before(getStartDate())) {
+                    continue;
+                }
+
+                ReleaseNote note = new ReleaseNote(
+                        workLog.getAuthor().getName(),
+                        issue.getKey(),
+                        workLog.getComment(),
+                        workLog.getCreationDate().toDate()
+                );
+                note.setIssue(issue);
+                notes.add(note);
+            }
+
+        }
+        return notes;
+    }
+
+    public List<ReleaseNote> getNextLogs() throws URISyntaxException {
+        List<ReleaseNote> notes = new ArrayList<ReleaseNote>();
+        Date now = new Date();
+
+        // get all issue assigned on authors and not closed or resolved
+        String authors = StringUtils.join(getAuthors(), ", ");
+        SearchResult result = getJiraClient().getSearchClient().searchJql(
+                String.format("assignee IN (%s) and status NOT IN (Resolved, Closed)",
+                        authors
+                ), new NullProgressMonitor()
+        );
+
+        for (BasicIssue basicIssue : result.getIssues()) {
+            Issue issue = getJiraClient().getIssueClient().getIssue(
+                    basicIssue.getKey(), new NullProgressMonitor());
+
+            BasicUser user = issue.getAssignee();
+            if (user == null) continue;
+
+            ReleaseNote note = new ReleaseNote(
+                    user.getName(),
+                    issue.getKey(),
+                    issue.getSummary(),
+                    now
+            );
+            note.setIssue(issue);
+            notes.add(note);
+        }
+        return notes;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
     }
 }
 
