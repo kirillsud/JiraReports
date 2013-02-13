@@ -1,6 +1,7 @@
-package com.exigenservices.voa.releaseNotes.printers;
+package ru.bigmilk.jiraReports.printers;
 
-import com.exigenservices.voa.releaseNotes.ReleaseNotes;
+import ru.bigmilk.jiraReports.ReportBuilder;
+
 import java.io.OutputStream;
 
 public interface Printer {
@@ -12,7 +13,7 @@ public interface Printer {
      * @param notes list of notes
      * @return false, if printer can't print notes
      */
-    public boolean print(OutputStream out, ReleaseNotes notes);
+    public boolean print(OutputStream out, ReportBuilder notes);
 
     /**
      * @return name of the current printer

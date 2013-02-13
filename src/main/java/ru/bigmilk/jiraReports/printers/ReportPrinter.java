@@ -1,9 +1,9 @@
-package com.exigenservices.voa.releaseNotes.printers;
+package ru.bigmilk.jiraReports.printers;
 
 import com.atlassian.jira.rest.client.NullProgressMonitor;
 import com.atlassian.jira.rest.client.domain.BasicResolution;
-import com.exigenservices.voa.releaseNotes.ReleaseNote;
-import com.exigenservices.voa.releaseNotes.ReleaseNotes;
+import ru.bigmilk.jiraReports.ReportRecord;
+import ru.bigmilk.jiraReports.ReportBuilder;
 import com.google.common.collect.HashMultimap;
 
 import java.io.*;
@@ -22,20 +22,20 @@ public class ReportPrinter extends AbstractPrinter {
     }
 
     @Override
-    public boolean print(OutputStream out, ReleaseNotes notes) {
+    public boolean print(OutputStream out, ReportBuilder notes) {
         Writer writer = new BufferedWriter(new OutputStreamWriter(out));
-        HashMultimap<String, ReleaseNote> doneLogs = HashMultimap.create();
-        HashMultimap<String, ReleaseNote> nextLogs = HashMultimap.create();
+        HashMultimap<String, ReportRecord> doneLogs = HashMultimap.create();
+        HashMultimap<String, ReportRecord> nextLogs = HashMultimap.create();
 
         // get done and next logs, grouped by author
         try {
             // @todo: need to filter duplicates
-            for (ReleaseNote note : notes.getDoneLogs()) {
-                doneLogs.put(note.getAuthor(), note);
+            for (ReportRecord note : notes.getDoneLogs()) {
+                doneLogs.put(note.getUsername(), note);
             }
 
-            for (ReleaseNote note : notes.getNextLogs()) {
-                nextLogs.put(note.getAuthor(), note);
+            for (ReportRecord note : notes.getNextLogs()) {
+                nextLogs.put(note.getUsername(), note);
             }
         } catch (Exception e) {
             return false;
@@ -43,7 +43,7 @@ public class ReportPrinter extends AbstractPrinter {
 
         try {
             // print all logs, grouped by author
-            for (String author : notes.getAuthors()) {
+            for (String author : notes.getUsers()) {
                 String fullName = notes.getJiraClient().getUserClient().
                         getUser(author, new NullProgressMonitor()).getDisplayName();
 
@@ -52,7 +52,7 @@ public class ReportPrinter extends AbstractPrinter {
 
                 // first print what was done
                 writer.write("=== What was done ===\n\n");
-                for (ReleaseNote note : doneLogs.get(author)) {
+                for (ReportRecord note : doneLogs.get(author)) {
                     if (!filterNote(note)) {
                         continue;
                     }
@@ -66,7 +66,7 @@ public class ReportPrinter extends AbstractPrinter {
 
                 // print what's next
                 writer.write("=== What's next ===\n\n");
-                for (ReleaseNote note : nextLogs.get(author)) {
+                for (ReportRecord note : nextLogs.get(author)) {
                     if (!filterNote(note)) {
                         continue;
                     }
@@ -91,7 +91,7 @@ public class ReportPrinter extends AbstractPrinter {
     }
 
     @Override
-    protected void printNote(Writer writer, ReleaseNote note) throws IOException {
+    protected void printNote(Writer writer, ReportRecord note) throws IOException {
         URI uri = note.getIssue().getSelf();
         String issueKey;
 
@@ -119,7 +119,7 @@ public class ReportPrinter extends AbstractPrinter {
     }
 
     @Override
-    protected String prepareComment(String comment, ReleaseNote note) {
+    protected String prepareComment(String comment, ReportRecord note) {
         // extended trim comment
         comment = trimStringExt(comment);
 

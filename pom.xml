@@ -4,24 +4,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>SVN release notes</name>
-    <groupId>com.exigenservices.voa</groupId>
-    <artifactId>release_notes</artifactId>
-    <version>0.1</version>
+    <name>JiraReports</name>
+    <groupId>ru.bigmilk</groupId>
+    <artifactId>JiraReports</artifactId>
+    <version>0.8</version>
     <inceptionYear>2013</inceptionYear>
-    <description>Tool to get release notes from SVN commits</description>
+    <description>JiraReports is a tool, that helps to make different reports from Jira and Subversion</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <currentYear>2013</currentYear>
-        <mainClass>${project.groupId}.releaseNotes.Main</mainClass>
+        <mainClass>${project.groupId}.${project.artifactId}.Main</mainClass>
         <buildNumber>0</buildNumber>
     </properties>
 
     <!-- Company information -->
     <organization>
-        <name>Exigen Services</name>
-        <url>http://exigenservices.com</url>
+        <name>BigMilk</name>
+        <url>http://bigmilk.ru</url>
     </organization>
 
     <repositories>

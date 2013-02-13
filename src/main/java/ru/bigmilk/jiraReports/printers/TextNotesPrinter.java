@@ -1,6 +1,6 @@
-package com.exigenservices.voa.releaseNotes.printers;
+package ru.bigmilk.jiraReports.printers;
 
-import com.exigenservices.voa.releaseNotes.ReleaseNote;
+import ru.bigmilk.jiraReports.ReportRecord;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -8,12 +8,12 @@ import java.io.Writer;
 public class TextNotesPrinter extends AbstractPrinter {
 
     @Override
-    protected void printNote(Writer writer, ReleaseNote note) throws IOException {
+    protected void printNote(Writer writer, ReportRecord note) throws IOException {
         writer.write("[" + note.getKey() + "] " + prepareComment(note) + "\n");
     }
 
     @Override
-    protected String prepareComment(String comment, ReleaseNote note) {
+    protected String prepareComment(String comment, ReportRecord note) {
         // preparation for bug comments
         if (note.getIssue().getIssueType().getName().equalsIgnoreCase("bug")) {
 

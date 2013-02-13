@@ -1,7 +1,7 @@
-package com.exigenservices.voa.releaseNotes.printers;
+package ru.bigmilk.jiraReports.printers;
 
 import com.atlassian.jira.rest.client.NullProgressMonitor;
-import com.exigenservices.voa.releaseNotes.ReleaseNotes;
+import ru.bigmilk.jiraReports.ReportBuilder;
 import net.sourceforge.jwbf.core.actions.util.ActionException;
 import net.sourceforge.jwbf.core.actions.util.ProcessException;
 import net.sourceforge.jwbf.core.contentRep.SimpleArticle;
@@ -47,7 +47,7 @@ public class WikiReportPrinter extends ReportPrinter {
     }
 
     @Override
-    public boolean print(OutputStream out, ReleaseNotes notes) {
+    public boolean print(OutputStream out, ReportBuilder notes) {
         // read template report file
         if (!readTemplate()) {
             return false;
@@ -77,7 +77,7 @@ public class WikiReportPrinter extends ReportPrinter {
                     getUser(notes.getLogin(), new NullProgressMonitor()).getDisplayName());
 
             String users = "";
-            for (String user : notes.getAuthors()) {
+            for (String user : notes.getUsers()) {
                 users += notes.getJiraClient().getUserClient().
                         getUser(user, new NullProgressMonitor()).getDisplayName() + ", ";
             }

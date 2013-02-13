@@ -1,4 +1,4 @@
-package com.exigenservices.voa.releaseNotes;
+package ru.bigmilk.jiraReports;
 
 import com.atlassian.jira.rest.client.AuthenticationHandler;
 import com.atlassian.jira.rest.client.JiraRestClient;
@@ -6,10 +6,13 @@ import com.atlassian.jira.rest.client.NullProgressMonitor;
 import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
 import com.atlassian.jira.rest.client.domain.*;
 import com.atlassian.jira.rest.client.internal.jersey.JerseyJiraRestClient;
-import com.exigenservices.voa.releaseNotes.printers.Printer;
-import com.exigenservices.voa.releaseNotes.printers.TextNotesPrinter;
+
+import ru.bigmilk.jiraReports.printers.Printer;
+import ru.bigmilk.jiraReports.printers.TextNotesPrinter;
+
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
+
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -30,9 +33,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class ReleaseNotes implements ISVNLogEntryHandler {
-    private Map<String, ReleaseNote> notes = new HashMap<String, ReleaseNote>();
-    private Set<String> authors = new HashSet<String>();
+public class ReportBuilder implements ISVNLogEntryHandler {
+    private Map<String, ReportRecord> notes = new HashMap<String, ReportRecord>();
+    private Set<String> users = new HashSet<String>();
     private Date startDate;
 
     private Options options = new Options();
@@ -44,14 +47,14 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     private Printer printer;
     private Map<String, Printer> printers;
 
-    public ReleaseNotes() {
+    public ReportBuilder() {
         initDefaultDate();
         initPrinters();
         initCommandLineOptions();
         loadConfig();
 
-        if (properties.getProperty("authors") != null) {
-            setAuthors(properties.getProperty("authors").split(","));
+        if (properties.getProperty("users") != null) {
+            setUsers(properties.getProperty("users").split(","));
         }
     }
 
@@ -96,13 +99,13 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
     }
 
     /**
-     * Set authors list
+     * Set users list
      *
-     * @param authors list of authors of commits
+     * @param users list of users of commits
      */
-    public void setAuthors(String authors []) {
-        this.authors = new HashSet<String>(
-                Arrays.asList(authors)
+    public void setUsers(String users[]) {
+        this.users = new HashSet<String>(
+                Arrays.asList(users)
         );
     }
 
@@ -148,7 +151,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
                         "password=<password>\n" +
                         "svn.url=<url>\n" +
                         "jira.url=<url>\n" +
-                        "authors=<user1>,<user2>,<user3>"
+                        "users=<user1>,<user2>,<user3>"
         );
     }
 
@@ -183,7 +186,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         }
 
         if (line.getOptionValue('a') != null) {
-            properties.setProperty("authors", line.getOptionValue('a'));
+            properties.setProperty("users", line.getOptionValue('a'));
         }
 
         if (line.getOptionValue('d') != null) {
@@ -218,7 +221,7 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         options.addOption("l", "login", true, "your login in workspace domain");
         options.addOption("s", "svn", true, "svn url");
         options.addOption("j", "jira", true, "jira url");
-        options.addOption("a", "authors", true, "authors to filter");
+        options.addOption("a", "users", true, "users to filter");
         options.addOption("d", "days", true, "days delay before current");
 
         // generate list of output formats
@@ -237,12 +240,12 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             return;
         }
 
-        // filter by author
-        if (authors.size() > 0 && !authors.contains(svnLogEntry.getAuthor())) {
+        // filter by user
+        if (users.size() > 0 && !users.contains(svnLogEntry.getAuthor())) {
             return;
         }
 
-        ReleaseNote note = ReleaseNote.parseSVNLog(svnLogEntry);
+        ReportRecord note = ReportRecord.parseSVNLog(svnLogEntry);
         if (note == null) {
             return;
         }
@@ -275,12 +278,12 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
 
     /**
      * Load commits from SVN for selected date period
-     * and filter it by author and other requirements
+     * and filter it by user and other requirements
      *
      * @return list of commits
      * @throws SVNException
      */
-    public Map<String, ReleaseNote> getCommits() throws SVNException {
+    public Map<String, ReportRecord> getCommits() throws SVNException {
         // initialize svn client
         SVNURL svnURL = SVNURL.parseURIEncoded(properties.getProperty("svn.url"));
         ISVNOptions svnOptions = SVNWCUtil.createDefaultOptions(true);
@@ -338,19 +341,19 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
         printer.print(out, this);
     }
 
-    public Set<String> getAuthors() {
-        return authors;
+    public Set<String> getUsers() {
+        return users;
     }
 
-    public List<ReleaseNote> getDoneLogs() throws URISyntaxException {
-        List<ReleaseNote> notes = new ArrayList<ReleaseNote>();
+    public List<ReportRecord> getDoneLogs() throws URISyntaxException {
+        List<ReportRecord> records = new ArrayList<ReportRecord>();
 
         // get all updated issues after start time
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd k:m");
-        String authors = StringUtils.join(getAuthors(), ", ");
+        String users = StringUtils.join(getUsers(), ", ");
         SearchResult result = getJiraClient().getSearchClient().searchJql(
                 String.format("updatedDate > \"%s\" AND (assignee was in (%s) OR assignee in (%s))",
-                        dateFormat.format(getStartDate()), authors, authors
+                        dateFormat.format(getStartDate()), users, users
                 ), new NullProgressMonitor()
         );
 
@@ -358,37 +361,36 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             Issue issue = getJiraClient().getIssueClient().getIssue(
                     basicIssue.getKey(), new NullProgressMonitor());
 
-            // check for needed authors work log after start date
+            // check for needed users work log after start date
             for (Worklog workLog : issue.getWorklogs()) {
                 // filter by date
                 if (workLog.getCreationDate().toDate().before(getStartDate())) {
                     continue;
                 }
 
-                ReleaseNote note = new ReleaseNote(
+                ReportRecord record = new ReportRecord(
                         workLog.getAuthor().getName(),
                         issue.getKey(),
                         workLog.getComment(),
                         workLog.getCreationDate().toDate()
                 );
-                note.setIssue(issue);
-                notes.add(note);
+                record.setIssue(issue);
+                records.add(record);
             }
 
         }
-        return notes;
+        return records;
     }
 
-    public List<ReleaseNote> getNextLogs() throws URISyntaxException {
-        List<ReleaseNote> notes = new ArrayList<ReleaseNote>();
+    public List<ReportRecord> getNextLogs() throws URISyntaxException {
+        List<ReportRecord> records = new ArrayList<ReportRecord>();
         Date now = new Date();
 
-        // get all issue assigned on authors and not closed or resolved
-        String authors = StringUtils.join(getAuthors(), ", ");
+        // get all issue assigned on users and not closed or resolved
+        String users = StringUtils.join(getUsers(), ", ");
         SearchResult result = getJiraClient().getSearchClient().searchJql(
-                String.format("assignee IN (%s) and status NOT IN (Resolved, Closed)",
-                        authors
-                ), new NullProgressMonitor()
+                String.format("assignee IN (%s) and status NOT IN (Resolved, Closed)", users),
+                new NullProgressMonitor()
         );
 
         for (BasicIssue basicIssue : result.getIssues()) {
@@ -398,16 +400,16 @@ public class ReleaseNotes implements ISVNLogEntryHandler {
             BasicUser user = issue.getAssignee();
             if (user == null) continue;
 
-            ReleaseNote note = new ReleaseNote(
+            ReportRecord record = new ReportRecord(
                     user.getName(),
                     issue.getKey(),
                     issue.getSummary(),
                     now
             );
-            note.setIssue(issue);
-            notes.add(note);
+            record.setIssue(issue);
+            records.add(record);
         }
-        return notes;
+        return records;
     }
 
     public void setStartDate(Date startDate) {

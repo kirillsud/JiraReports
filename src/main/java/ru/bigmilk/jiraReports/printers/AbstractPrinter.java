@@ -1,7 +1,7 @@
-package com.exigenservices.voa.releaseNotes.printers;
+package ru.bigmilk.jiraReports.printers;
 
-import com.exigenservices.voa.releaseNotes.ReleaseNote;
-import com.exigenservices.voa.releaseNotes.ReleaseNotes;
+import ru.bigmilk.jiraReports.ReportBuilder;
+import ru.bigmilk.jiraReports.ReportRecord;
 
 import java.io.*;
 import java.util.Map;
@@ -9,9 +9,9 @@ import java.util.Map;
 public abstract class AbstractPrinter implements Printer {
 
     @Override
-    public boolean print(OutputStream out, ReleaseNotes notes) {
+    public boolean print(OutputStream out, ReportBuilder notes) {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
-        Map<String, ReleaseNote> commits;
+        Map<String, ReportRecord> commits;
         try {
             commits = getData(notes);
         } catch (Exception e) {
@@ -19,7 +19,7 @@ public abstract class AbstractPrinter implements Printer {
         }
 
         for (String key : commits.keySet()) {
-            ReleaseNote note = commits.get(key);
+            ReportRecord note = commits.get(key);
 
             if (!filterNote(note)) {
                 continue;
@@ -40,24 +40,24 @@ public abstract class AbstractPrinter implements Printer {
         return true;
     }
 
-    protected Map<String, ReleaseNote> getData(ReleaseNotes notes) throws Exception {
+    protected Map<String, ReportRecord> getData(ReportBuilder notes) throws Exception {
         return notes.getCommits();
     }
 
-    protected boolean filterNote(ReleaseNote note) {
+    protected boolean filterNote(ReportRecord note) {
         return true;
     }
 
-    protected String prepareComment(ReleaseNote note) {
+    protected String prepareComment(ReportRecord note) {
         return prepareComment(note.getComment(), note);
     }
 
-    protected String prepareComment(String comment, ReleaseNote note) {
+    protected String prepareComment(String comment, ReportRecord note) {
         // make first letter uppercase (for beautiful output)
         comment = comment.substring(0, 1).toUpperCase() + comment.substring(1);
 
         return comment;
     }
 
-    protected abstract void printNote(Writer writer, ReleaseNote note) throws IOException;
+    protected abstract void printNote(Writer writer, ReportRecord note) throws IOException;
 }

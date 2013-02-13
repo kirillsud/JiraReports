@@ -1,4 +1,4 @@
-package com.exigenservices.voa.releaseNotes;
+package ru.bigmilk.jiraReports;
 
 import org.apache.commons.cli.*;
 
@@ -14,20 +14,20 @@ public class Main {
         String login, password, svnUrlString, jiraUrlString;
 
         // prepare release nodes
-        ReleaseNotes releaseNotes = new ReleaseNotes();
+        ReportBuilder reportBuilder = new ReportBuilder();
         try {
-            releaseNotes.parseCommandLineArguments(args);
+            reportBuilder.parseCommandLineArguments(args);
         } catch (ParseException e) {
             System.out.println("ERROR: Wrong command line arguments\n");
-            releaseNotes.printCommandLineHelp();
+            reportBuilder.printCommandLineHelp();
             return;
         }
 
         // prepare initial data
-        login = releaseNotes.getLogin();
-        password = releaseNotes.getPassword();
-        svnUrlString = releaseNotes.getSvnURL();
-        jiraUrlString = releaseNotes.getJiraURL();
+        login = reportBuilder.getLogin();
+        password = reportBuilder.getPassword();
+        svnUrlString = reportBuilder.getSvnURL();
+        jiraUrlString = reportBuilder.getJiraURL();
 
         // check login and etc.
         List<String> emptyParametersList = new ArrayList<String>();
@@ -53,7 +53,7 @@ public class Main {
 
             // print message
             System.out.println("ERROR: Please, specify required parameters: " + params + "\n");
-            releaseNotes.printCommandLineHelp();
+            reportBuilder.printCommandLineHelp();
             return;
         }
 
@@ -67,18 +67,18 @@ public class Main {
             }
 
             password = new String(console.readPassword("Password: "));
-            releaseNotes.setPassword(password);
+            reportBuilder.setPassword(password);
 
         }
 
         // check jira connection
-        // @todo: move it to ReleaseNotes
-        if (!releaseNotes.resetJiraClient()) {
+        // @todo: move it to ReportBuilder
+        if (!reportBuilder.resetJiraClient()) {
             System.out.println("ERROR: Couldn't connect to JIRA. Please check login, password or JIRA URL");
             return;
         }
 
-        // output logs
-        releaseNotes.print(System.out);
+        // output report
+        reportBuilder.print(System.out);
     }
 }

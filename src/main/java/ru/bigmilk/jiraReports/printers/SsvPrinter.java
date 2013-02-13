@@ -1,4 +1,4 @@
-package com.exigenservices.voa.releaseNotes.printers;
+package ru.bigmilk.jiraReports.printers;
 
 public class SsvPrinter extends CsvPrinter {
 
