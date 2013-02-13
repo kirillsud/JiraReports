@@ -6,7 +6,7 @@
 
     <name>JiraReports</name>
     <groupId>ru.bigmilk</groupId>
-    <artifactId>JiraReports</artifactId>
+    <artifactId>jiraReports</artifactId>
     <version>0.8</version>
     <inceptionYear>2013</inceptionYear>
     <description>JiraReports is a tool, that helps to make different reports from Jira and Subversion</description>
@@ -123,6 +123,15 @@
                 <filtering>false</filtering>
                 <includes>
                     <include>*</include>
+                </includes>
+            </resource>
+
+            <resource>
+                <directory>${project.basedir}</directory>
+                <targetPath>./</targetPath>
+                <filtering>false</filtering>
+                <includes>
+                    <include>log4j.xml</include>
                 </includes>
             </resource>
 

@@ -1,0 +1,5 @@
+ru.bigmilk.jiraReports.printers.TextNotesPrinter
+ru.bigmilk.jiraReports.printers.CsvPrinter
+ru.bigmilk.jiraReports.printers.SsvPrinter
+ru.bigmilk.jiraReports.printers.ReportPrinter
+ru.bigmilk.jiraReports.printers.WikiReportPrinter

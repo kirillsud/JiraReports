@@ -8,14 +8,14 @@ import java.io.Writer;
 public class TextNotesPrinter extends AbstractPrinter {
 
     @Override
-    protected void printNote(Writer writer, ReportRecord note) throws IOException {
-        writer.write("[" + note.getKey() + "] " + prepareComment(note) + "\n");
+    protected void printRecord(Writer writer, ReportRecord record) throws IOException {
+        writer.write("[" + record.getKey() + "] " + prepareComment(record) + "\n");
     }
 
     @Override
-    protected String prepareComment(String comment, ReportRecord note) {
+    protected String prepareComment(String comment, ReportRecord record) {
         // preparation for bug comments
-        if (note.getIssue().getIssueType().getName().equalsIgnoreCase("bug")) {
+        if (record.getIssue().getIssueType().getName().equalsIgnoreCase("bug")) {
 
             // if comment starts from "fix ", remove it
             if (comment.toLowerCase().startsWith("fix ")) {
@@ -30,7 +30,7 @@ public class TextNotesPrinter extends AbstractPrinter {
 
         // @todo: add preparations for other types of committed issues
 
-        return super.prepareComment(comment, note);
+        return super.prepareComment(comment, record);
     }
 
     private String appendToString(String string, String prefix) {

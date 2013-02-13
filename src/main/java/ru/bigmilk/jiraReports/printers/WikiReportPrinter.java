@@ -29,36 +29,24 @@ public class WikiReportPrinter extends ReportPrinter {
     @Override
     public String getDescription() {
         return String.format(
-                "work log report, generates article on wiki. To generate article need to create " +
-                "file '%s' with next content:\n" +
-                " * 1st line: <wiki url>\n" +
-                " * 2nd line: <article title>\n" +
-                " * other lines: <article content>\n\n" +
-                "For <article title> and <article content> you could use next placeholders:\n" +
-                " * <<report>> - place to insert report\n" +
-                " * <<current date>> - current date in format YYYY-MM-DDTHH:MM:SSX\n" +
-                " * <<current day>> - current day in format YYYY-MM-DD\n" +
-                " * <<previous work day>> - previous work day in format YYYY-MM-DD\n" +
-                " * <<next work day>> - next work day in format YYYY-MM-DD\n",
-                " * <<current user>> - full name of logged user\n",
-                " * <<users>> - list of users full name, comma separated\n",
-                REPORT_TEMPLATE
+                "work log report, generates article on wiki, " +
+                        "see https://github.com/kirillsud/JiraReports/wiki/Wiki-Report"
         );
     }
 
     @Override
-    public boolean print(OutputStream out, ReportBuilder notes) {
+    public boolean print(OutputStream out, ReportBuilder reportBuilder) {
         // read template report file
         if (!readTemplate()) {
             return false;
         }
 
-        // init placeholders list
+        // init placeholders list        https://github.com/kirillsud/JiraReports/wiki/Wiki-Report
         Map<String, String> placeholders = new HashMap<String, String>();
 
         // generate report
         OutputStream reportOutput = new ByteArrayOutputStream();
-        if (!super.print(reportOutput, notes)) {
+        if (!super.print(reportOutput, reportBuilder)) {
             return false;
         }
         // init placeholders list
@@ -67,18 +55,18 @@ public class WikiReportPrinter extends ReportPrinter {
         // init dates variables
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         placeholders.put("current day", dateFormat.format(new Date()));
-        placeholders.put("previous work day", dateFormat.format(notes.getDaysBefore(1)));
-        placeholders.put("next work day", dateFormat.format(notes.getDaysBefore(-1)));
+        placeholders.put("previous work day", dateFormat.format(ReportBuilder.getWorkDaysBefore(1)));
+        placeholders.put("next work day", dateFormat.format(ReportBuilder.getWorkDaysBefore(-1)));
         placeholders.put("current date", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date()));
 
         // init users variables
         try {
-            placeholders.put("current user", notes.getJiraClient().getUserClient().
-                    getUser(notes.getLogin(), new NullProgressMonitor()).getDisplayName());
+            placeholders.put("current user", reportBuilder.getJiraClient().getUserClient().
+                    getUser(reportBuilder.getLogin(), new NullProgressMonitor()).getDisplayName());
 
             String users = "";
-            for (String user : notes.getUsers()) {
-                users += notes.getJiraClient().getUserClient().
+            for (String user : reportBuilder.getUsers()) {
+                users += reportBuilder.getJiraClient().getUserClient().
                         getUser(user, new NullProgressMonitor()).getDisplayName() + ", ";
             }
             placeholders.put("users", users);
@@ -97,7 +85,7 @@ public class WikiReportPrinter extends ReportPrinter {
         // try to create a wiki article
         try {
             MediaWikiBot wikiBot = new MediaWikiBot(wikiURL.toString());
-            wikiBot.login(notes.getLogin(), notes.getPassword(), "PM");
+            wikiBot.login(reportBuilder.getLogin(), reportBuilder.getPassword(), "PM");
             SimpleArticle article = new SimpleArticle(articleTitle);
             article.setText(articleContent);
             wikiBot.writeContent(article);

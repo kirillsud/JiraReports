@@ -33,10 +33,23 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ * Class implements business logic for querying data for reports.
+ *
+ * It could:
+ * * initialize settings from configuration file and command line arguments
+ * * gets work log from Jira
+ * * gets commits log from SVN
+ *
+ * To print reports ReportBuilder uses @see Printer interface.
+ * It dynamically initialize list of printers with @see ServiceLoader help.
+ */
 public class ReportBuilder implements ISVNLogEntryHandler {
-    private Map<String, ReportRecord> notes = new HashMap<String, ReportRecord>();
+    private final String CONFIG_FILE = "config.ini";
+
+    private Map<String, ReportRecord> records = new HashMap<String, ReportRecord>();
     private Set<String> users = new HashSet<String>();
-    private Date startDate;
+    private Date reportStartDate;
 
     private Options options = new Options();
     private Properties properties = new Properties();
@@ -51,6 +64,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         initDefaultDate();
         initPrinters();
         initCommandLineOptions();
+
         loadConfig();
 
         if (properties.getProperty("users") != null) {
@@ -58,6 +72,11 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         }
     }
 
+    /**
+     * Load all available printers for ReportBuilder
+     *
+     * @see Printer
+     */
     private void initPrinters() {
         printers = new HashMap<String, Printer>();
         ServiceLoader<Printer> printersSet = ServiceLoader.load(Printer.class);
@@ -68,34 +87,38 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         printer = new TextNotesPrinter();
     }
 
+    /**
+     * Init default start date. Now it one day ago from current day.
+     */
     private void initDefaultDate() {
-        setStartDate(getDaysBefore(1));
+        setReportStartDate(getWorkDaysBefore(1));
     }
 
     /**
-     * Set start date for commits on count days before current day and time
+     * Generate work date before current date with offset in count days
      *
-     * @param count days before
+     * @param count days offset
+     * @return generated date
      */
-    public Date getDaysBefore(int count) {
-        // get 1 day ago date
-        Calendar releaseNotesStartDate = Calendar.getInstance();
-        releaseNotesStartDate.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
-        releaseNotesStartDate.add(Calendar.DATE, -count);
+    public static Date getWorkDaysBefore(int count) {
+        // get count days ago date
+        Calendar date = Calendar.getInstance();
+        date.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
+        date.add(Calendar.DATE, -count);
 
         // check is it holiday
-        int dayOfWeek = releaseNotesStartDate.get(Calendar.DAY_OF_WEEK);
+        int dayOfWeek = date.get(Calendar.DAY_OF_WEEK);
         switch (dayOfWeek) {
             case Calendar.SUNDAY:
-                releaseNotesStartDate.add(Calendar.DATE, count > 0 ? -2 : 2);
+                date.add(Calendar.DATE, count > 0 ? -2 : 2);
                 break;
 
             case Calendar.SATURDAY:
-                releaseNotesStartDate.add(Calendar.DATE, count > 0 ? -1 : 1);
+                date.add(Calendar.DATE, count > 0 ? -1 : 1);
                 break;
         }
 
-        return releaseNotesStartDate.getTime();
+        return date.getTime();
     }
 
     /**
@@ -109,8 +132,15 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         );
     }
 
-    public Date getStartDate() {
-        return startDate;
+    public void setPassword(String password) {
+        properties.setProperty("password", password);
+    }
+
+    /**
+     * @return start date for reporting
+     */
+    public Date getReportStartDate() {
+        return reportStartDate;
     }
 
     public String getLogin() {
@@ -129,29 +159,38 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         return properties.getProperty("jira.url") != null ? properties.getProperty("jira.url") : "";
     }
 
+    /**
+     * Load config from config file
+     */
     public void loadConfig() {
         try {
-            properties.load(new FileReader("config.ini"));
+            properties.load(new FileReader(CONFIG_FILE));
         } catch (FileNotFoundException ignored) {
         } catch (IOException ignored) {
         }
     }
 
+    /**
+     * Print command line help
+     */
     public void printCommandLineHelp() {
         String defaultLogin = System.getProperty("user.name").toLowerCase();
 
         (new HelpFormatter()).printHelp(
-                1000,
-                "release_notes.jar [OPTIONS]",
+               1000,
+                "jiraReports.jar [OPTIONS]",
                 null,
                 options,
-                "\nAlso You could create config.ini file with settings, that you need. " +
-                        "Here is an example:\n\n\n" +
-                        "login=" + (defaultLogin.isEmpty() ? "<login>" : defaultLogin) + "\n" +
+                String.format("\n" +
+                        "Also You could create %s file with settings, that you need. Here is an example:\n" +
+                        "login=%s\n" +
                         "password=<password>\n" +
                         "svn.url=<url>\n" +
                         "jira.url=<url>\n" +
-                        "users=<user1>,<user2>,<user3>"
+                        "users=<user1>,<user2>,<user3>",
+                        CONFIG_FILE,
+                        defaultLogin.isEmpty() ? "<login>" : defaultLogin
+                )
         );
     }
 
@@ -159,14 +198,17 @@ public class ReportBuilder implements ISVNLogEntryHandler {
      * Parse the command line arguments
      *
      * @param args arguments from command line
-     * @return false, if there is no applicable arguments
      * @throws org.apache.commons.cli.ParseException
      */
-    public boolean parseCommandLineArguments(String[] args) throws ParseException {
+    public void parseCommandLineArguments(String[] args) throws ParseException {
         CommandLine line = parser.parse(options, args);
 
         if (line.getOptions().length == 0) {
-            return false;
+            return;
+        }
+
+        if (line.hasOption('?')) {
+            throw new ParseException("");
         }
 
         if (line.getOptionValue('l') != null) {
@@ -197,7 +239,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
                 throw new ParseException("Wrong days delay option format");
             }
 
-            setStartDate(getDaysBefore(count));
+            setReportStartDate(getWorkDaysBefore(count));
         }
 
         if (line.getOptionValue('f') != null) {
@@ -208,8 +250,6 @@ public class ReportBuilder implements ISVNLogEntryHandler {
 
             printer = printers.get(format);
         }
-
-        return true;
     }
 
     /**
@@ -223,20 +263,20 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         options.addOption("j", "jira", true, "jira url");
         options.addOption("a", "users", true, "users to filter");
         options.addOption("d", "days", true, "days delay before current");
+        options.addOption("?", "help", false, "display this help");
 
         // generate list of output formats
         String formats = "";
         for (String printerName : printers.keySet()) {
-            formats += printerName + " - " + printers.get(printerName).getDescription() + "\n";
+            formats += String.format("%s - %s\n", printerName, printers.get(printerName).getDescription());
         }
-
         options.addOption("f", "format", true, "output format:\n" + formats);
     }
 
     @Override
     public void handleLogEntry(SVNLogEntry svnLogEntry) throws SVNException {
         // filter by date
-        if (svnLogEntry.getDate().before(startDate)) {
+        if (svnLogEntry.getDate().before(reportStartDate)) {
             return;
         }
 
@@ -245,20 +285,20 @@ public class ReportBuilder implements ISVNLogEntryHandler {
             return;
         }
 
-        ReportRecord note = ReportRecord.parseSVNLog(svnLogEntry);
-        if (note == null) {
+        ReportRecord record = ReportRecord.parseSVNLog(svnLogEntry);
+        if (record == null) {
             return;
         }
 
         // filter by issue key
-        if (notes.containsKey(note.getKey())) {
+        if (records.containsKey(record.getKey())) {
             return;
         }
 
         // load jira data about issue
         Issue issue;
         try {
-            issue = getJiraClient().getIssueClient().getIssue(note.getKey(), new NullProgressMonitor());
+            issue = getJiraClient().getIssueClient().getIssue(record.getKey(), new NullProgressMonitor());
         } catch (URISyntaxException e) {
             return;
         }
@@ -271,9 +311,9 @@ public class ReportBuilder implements ISVNLogEntryHandler {
 
         // @todo: add analyzing of subtask (issue.getType().isSubtask())
 
-        note.setIssue(issue);
+        record.setIssue(issue);
 
-        notes.put(note.getKey(), note);
+        records.put(record.getKey(), record);
     }
 
     /**
@@ -295,8 +335,8 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         clientManager.getLogClient().doLog(
                 svnURL,
                 new String[]{},
-                SVNRevision.create(this.getStartDate()),
-                SVNRevision.create(this.getStartDate()),
+                SVNRevision.create(this.getReportStartDate()),
+                SVNRevision.create(this.getReportStartDate()),
                 SVNRevision.HEAD,
                 true,
                 true,
@@ -304,11 +344,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
                 this
         );
 
-        return notes;
-    }
-
-    public void setPassword(String password) {
-        properties.setProperty("password", password);
+        return records;
     }
 
     public JiraRestClient getJiraClient() throws URISyntaxException {
@@ -353,7 +389,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         String users = StringUtils.join(getUsers(), ", ");
         SearchResult result = getJiraClient().getSearchClient().searchJql(
                 String.format("updatedDate > \"%s\" AND (assignee was in (%s) OR assignee in (%s))",
-                        dateFormat.format(getStartDate()), users, users
+                        dateFormat.format(getReportStartDate()), users, users
                 ), new NullProgressMonitor()
         );
 
@@ -364,7 +400,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
             // check for needed users work log after start date
             for (Worklog workLog : issue.getWorklogs()) {
                 // filter by date
-                if (workLog.getCreationDate().toDate().before(getStartDate())) {
+                if (workLog.getCreationDate().toDate().before(getReportStartDate())) {
                     continue;
                 }
 
@@ -412,8 +448,8 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         return records;
     }
 
-    public void setStartDate(Date startDate) {
-        this.startDate = startDate;
+    public void setReportStartDate(Date reportStartDate) {
+        this.reportStartDate = reportStartDate;
     }
 }
 

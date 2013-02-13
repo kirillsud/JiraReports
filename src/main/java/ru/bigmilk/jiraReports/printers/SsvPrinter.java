@@ -9,7 +9,7 @@ public class SsvPrinter extends CsvPrinter {
 
     @Override
     public String getDescription() {
-        return "semicolon separated values: <jira key>;<jira summary>;<author>";
+        return "semicolon separated values: <jira key>;<jira summary>;<user>";
     }
 
     @Override

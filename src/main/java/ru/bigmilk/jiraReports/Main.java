@@ -18,7 +18,10 @@ public class Main {
         try {
             reportBuilder.parseCommandLineArguments(args);
         } catch (ParseException e) {
-            System.out.println("ERROR: Wrong command line arguments\n");
+            if (!e.getMessage().isEmpty()) {
+                printError(e.getMessage().replace(':', '\0'));
+            }
+
             reportBuilder.printCommandLineHelp();
             return;
         }
@@ -52,7 +55,7 @@ public class Main {
             params = params.substring(2);
 
             // print message
-            System.out.println("ERROR: Please, specify required parameters: " + params + "\n");
+            printError(String.format("Please, specify required parameters: %s", params));
             reportBuilder.printCommandLineHelp();
             return;
         }
@@ -61,8 +64,7 @@ public class Main {
         if (password.isEmpty()) {
             Console console = System.console();
             if (console == null) {
-                System.out.println("ERROR: Please, specify your domain password in config file or " +
-                        "in command line arguments\n");
+                printError("Please, specify your domain password in config file or in command line arguments");
                 return;
             }
 
@@ -74,11 +76,15 @@ public class Main {
         // check jira connection
         // @todo: move it to ReportBuilder
         if (!reportBuilder.resetJiraClient()) {
-            System.out.println("ERROR: Couldn't connect to JIRA. Please check login, password or JIRA URL");
+            printError("Couldn't connect to JIRA. Please check login, password or JIRA URL");
             return;
         }
 
-        // output report
+        // print report
         reportBuilder.print(System.out);
+    }
+
+    private static void printError(String message) {
+        System.out.println(String.format("ERROR: %s", message));
     }
 }

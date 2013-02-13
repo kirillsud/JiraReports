@@ -7,13 +7,13 @@ import java.io.OutputStream;
 public interface Printer {
 
     /**
-     * Print notes into inputStream
+     * Print records into inputStream
      *
      * @param out stream to output
-     * @param notes list of notes
-     * @return false, if printer can't print notes
+     * @param reportBuilder report builder
+     * @return false, if printer can't print record
      */
-    public boolean print(OutputStream out, ReportBuilder notes);
+    public boolean print(OutputStream out, ReportBuilder reportBuilder);
 
     /**
      * @return name of the current printer

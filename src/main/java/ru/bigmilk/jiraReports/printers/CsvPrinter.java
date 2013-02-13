@@ -8,18 +8,18 @@ import java.io.Writer;
 public class CsvPrinter extends AbstractPrinter {
 
     @Override
-    protected boolean filterNote(ReportRecord note) {
+    protected boolean filterRecord(ReportRecord record) {
         // filter only bugs
-        return note.getIssue().getIssueType().getName().equalsIgnoreCase("bug") && super.filterNote(note);
+        return record.getIssue().getIssueType().getName().equalsIgnoreCase("bug") && super.filterRecord(record);
 
     }
 
     @Override
-    protected void printNote(Writer writer, ReportRecord note) throws IOException {
-        writer.write(note.getKey() + getDelimiter() +
-                "\"" + note.getIssue().getSummary() + "\"" + getDelimiter() +
-                note.getUsername() + getDelimiter() +
-                note.getDate() +
+    protected void printRecord(Writer writer, ReportRecord record) throws IOException {
+        writer.write(record.getKey() + getDelimiter() +
+                "\"" + record.getIssue().getSummary() + "\"" + getDelimiter() +
+                record.getUsername() + getDelimiter() +
+                record.getDate() +
                 "\n"
         );
     }
@@ -35,6 +35,6 @@ public class CsvPrinter extends AbstractPrinter {
 
     @Override
     public String getDescription() {
-        return "comma separated values: <jira key>,<jira summary>,<author>";
+        return "comma separated values: <jira key>,<jira summary>,<user>";
     }
 }
