@@ -175,7 +175,6 @@
                             <mainClass>${mainClass}</mainClass>
                         </manifest>
                     </archive>
-                    <outputDirectory>bin</outputDirectory>
                 </configuration>
             </plugin>
 
