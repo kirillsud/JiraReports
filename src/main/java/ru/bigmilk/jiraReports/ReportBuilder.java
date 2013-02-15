@@ -426,8 +426,8 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd k:m");
         String users = StringUtils.join(getUsers(), ", ");
         SearchResult result = getJiraClient().getSearchClient().searchJql(
-                String.format("assignee IN (%s) and status NOT IN (Resolved, Closed) AND updateDate > \"%s\"",
-                        users, dateFormat.format(getWorkDaysBefore(14))),
+                String.format("assignee IN (%s) AND status NOT IN (Resolved, Closed) AND updatedDate > \"%s\"",
+                        users, dateFormat.format(getWorkDaysBefore(7))),
                 new NullProgressMonitor()
         );
 
