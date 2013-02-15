@@ -423,9 +423,11 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         Date now = new Date();
 
         // get all issue assigned on users and not closed or resolved
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd k:m");
         String users = StringUtils.join(getUsers(), ", ");
         SearchResult result = getJiraClient().getSearchClient().searchJql(
-                String.format("assignee IN (%s) and status NOT IN (Resolved, Closed)", users),
+                String.format("assignee IN (%s) and status NOT IN (Resolved, Closed) AND updateDate > \"%s\"",
+                        users, dateFormat.format(getWorkDaysBefore(14))),
                 new NullProgressMonitor()
         );
 
