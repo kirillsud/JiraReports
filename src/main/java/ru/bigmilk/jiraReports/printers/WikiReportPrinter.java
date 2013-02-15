@@ -35,10 +35,12 @@ public class WikiReportPrinter extends ReportPrinter {
     }
 
     @Override
-    public boolean print(OutputStream out, ReportBuilder reportBuilder) {
+    public void print(OutputStream out, ReportBuilder reportBuilder) throws PrinterException {
         // read template report file
-        if (!readTemplate()) {
-            return false;
+        try {
+            readTemplate();
+        } catch (Exception e) {
+            throw new PrinterException(e.getMessage());
         }
 
         // init placeholders list        https://github.com/kirillsud/JiraReports/wiki/Wiki-Report
@@ -46,9 +48,8 @@ public class WikiReportPrinter extends ReportPrinter {
 
         // generate report
         OutputStream reportOutput = new ByteArrayOutputStream();
-        if (!super.print(reportOutput, reportBuilder)) {
-            return false;
-        }
+        super.print(reportOutput, reportBuilder);
+
         // init placeholders list
         placeholders.put("report", reportOutput.toString());
 
@@ -71,7 +72,7 @@ public class WikiReportPrinter extends ReportPrinter {
             }
             placeholders.put("users", users);
         } catch (URISyntaxException e) {
-            return false;
+            throw new PrinterException(e.getMessage());
         }
 
         // replace article placeholders
@@ -90,24 +91,22 @@ public class WikiReportPrinter extends ReportPrinter {
             article.setText(articleContent);
             wikiBot.writeContent(article);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            throw new PrinterException(e.getMessage());
         } catch (ProcessException e) {
-            e.printStackTrace();
+            throw new PrinterException(e.getMessage());
         } catch (ActionException e) {
-            e.printStackTrace();
+            throw new PrinterException(e.getMessage());
         }
 
         // try output article content
         try {
             out.write(articleContent.getBytes());
         } catch (IOException e) {
-            return false;
+            throw new PrinterException(e.getMessage());
         }
-
-        return true;
     }
 
-    protected boolean readTemplate() {
+    protected void readTemplate() throws Exception {
         BufferedReader templateReader;
 
         // open report template file for read
@@ -115,8 +114,7 @@ public class WikiReportPrinter extends ReportPrinter {
             templateReader = new BufferedReader(new FileReader(REPORT_TEMPLATE));
         } catch (FileNotFoundException e) {
             // @todo: move this message to error wrapper
-            System.out.println("Can't generate report. First create report template. More information in help.");
-            return true;
+            throw new Exception("Can't generate report. First create report template. More information in help.");
         }
 
         // read wiki URL
@@ -124,8 +122,7 @@ public class WikiReportPrinter extends ReportPrinter {
             wikiURL = new URI(templateReader.readLine());
         } catch (Exception e) {
             // @todo: move this message to error wrapper
-            System.out.println("Wrong report template. First line must contains wiki URL");
-            return true;
+            throw new Exception("Wrong report template. First line must contains wiki URL");
         }
 
         // read wiki Title
@@ -133,8 +130,7 @@ public class WikiReportPrinter extends ReportPrinter {
             articleTitle = templateReader.readLine();
         } catch (IOException e) {
             // @todo: move this message to error wrapper
-            System.out.println("Wrong report template. Second line must contains article title");
-            return true;
+            throw new Exception("Wrong report template. Second line must contains article title");
         }
 
         // read first line of article content
@@ -142,8 +138,7 @@ public class WikiReportPrinter extends ReportPrinter {
             articleContent = templateReader.readLine() + "\n";
         } catch (IOException e) {
             // @todo: move this message to error wrapper
-            System.out.println("Wrong report template. Third line must contains article content");
-            return true;
+            throw new Exception("Wrong report template. Third line must contains article content");
         }
 
         // read other lines of article content
@@ -153,6 +148,5 @@ public class WikiReportPrinter extends ReportPrinter {
                 articleContent += line + "\n";
             }
         } catch (IOException ignored) {}
-        return true;
     }
 }

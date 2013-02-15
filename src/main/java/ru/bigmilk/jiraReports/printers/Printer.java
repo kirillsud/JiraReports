@@ -11,9 +11,9 @@ public interface Printer {
      *
      * @param out stream to output
      * @param reportBuilder report builder
-     * @return false, if printer can't print record
+     * @throws PrinterException
      */
-    public boolean print(OutputStream out, ReportBuilder reportBuilder);
+    public void print(OutputStream out, ReportBuilder reportBuilder) throws PrinterException;
 
     /**
      * @return name of the current printer

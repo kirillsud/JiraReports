@@ -9,13 +9,13 @@ import java.util.Map;
 public abstract class AbstractPrinter implements Printer {
 
     @Override
-    public boolean print(OutputStream out, ReportBuilder reportBuilder) {
+    public void print(OutputStream out, ReportBuilder reportBuilder) throws PrinterException {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
         Map<String, ReportRecord> commits;
         try {
             commits = getData(reportBuilder);
         } catch (Exception e) {
-            return false;
+            throw new PrinterException(e.getMessage());
         }
 
         for (String key : commits.keySet()) {
@@ -28,16 +28,14 @@ public abstract class AbstractPrinter implements Printer {
             try {
                 printRecord(writer, record);
             } catch (IOException e) {
-                return false;
+                throw new PrinterException(e.getMessage());
             }
         }
         try {
             writer.flush();
         } catch (IOException e) {
-            return false;
+            throw new PrinterException(e.getMessage());
         }
-
-        return true;
     }
 
     protected Map<String, ReportRecord> getData(ReportBuilder reportBuilder) throws Exception {

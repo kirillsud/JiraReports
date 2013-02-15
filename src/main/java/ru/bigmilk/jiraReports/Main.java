@@ -81,7 +81,11 @@ public class Main {
         }
 
         // print report
-        reportBuilder.print(System.out);
+        try {
+            reportBuilder.print(System.out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private static void printError(String message) {

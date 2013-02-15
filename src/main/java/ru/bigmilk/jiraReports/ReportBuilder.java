@@ -8,6 +8,7 @@ import com.atlassian.jira.rest.client.domain.*;
 import com.atlassian.jira.rest.client.internal.jersey.JerseyJiraRestClient;
 
 import ru.bigmilk.jiraReports.printers.Printer;
+import ru.bigmilk.jiraReports.printers.PrinterException;
 import ru.bigmilk.jiraReports.printers.TextNotesPrinter;
 
 import org.apache.commons.cli.*;
@@ -373,7 +374,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         return true;
     }
 
-    public void print(OutputStream out) {
+    public void print(OutputStream out) throws PrinterException {
         printer.print(out, this);
     }
 

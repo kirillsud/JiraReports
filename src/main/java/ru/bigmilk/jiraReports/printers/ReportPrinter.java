@@ -22,7 +22,7 @@ public class ReportPrinter extends AbstractPrinter {
     }
 
     @Override
-    public boolean print(OutputStream out, ReportBuilder reportBuilder) {
+    public void print(OutputStream out, ReportBuilder reportBuilder) throws PrinterException {
         Writer writer = new BufferedWriter(new OutputStreamWriter(out));
         HashMultimap<String, ReportRecord> doneLogs = HashMultimap.create();
         HashMultimap<String, ReportRecord> nextLogs = HashMultimap.create();
@@ -38,7 +38,7 @@ public class ReportPrinter extends AbstractPrinter {
                 nextLogs.put(record.getUsername(), record);
             }
         } catch (Exception e) {
-            return false;
+            throw new PrinterException(e.getMessage());
         }
 
         try {
@@ -84,10 +84,8 @@ public class ReportPrinter extends AbstractPrinter {
 
             writer.flush();
         } catch (Exception e) {
-            return false;
+            throw new PrinterException(e.getMessage());
         }
-
-        return true;
     }
 
     @Override
