@@ -261,7 +261,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         options.addOption("l", "login", true, "your login in workspace domain");
         options.addOption("s", "svn", true, "svn url");
         options.addOption("j", "jira", true, "jira url");
-        options.addOption("a", "users", true, "users to filter");
+        options.addOption("u", "users", true, "users to filter");
         options.addOption("d", "days", true, "days delay before current");
         options.addOption("?", "help", false, "display this help");
 
