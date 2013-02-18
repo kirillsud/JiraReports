@@ -113,32 +113,28 @@ public class WikiReportPrinter extends ReportPrinter {
         try {
             templateReader = new BufferedReader(new FileReader(REPORT_TEMPLATE));
         } catch (FileNotFoundException e) {
-            // @todo: move this message to error wrapper
-            throw new Exception("Can't generate report. First create report template. More information in help.");
+            throw new PrinterException("Can't generate report. First create report template. More information in help.");
         }
 
         // read wiki URL
         try {
             wikiURL = new URI(templateReader.readLine());
         } catch (Exception e) {
-            // @todo: move this message to error wrapper
-            throw new Exception("Wrong report template. First line must contains wiki URL");
+            throw new PrinterException("Wrong report template. First line must contains wiki URL");
         }
 
         // read wiki Title
         try {
             articleTitle = templateReader.readLine();
         } catch (IOException e) {
-            // @todo: move this message to error wrapper
-            throw new Exception("Wrong report template. Second line must contains article title");
+            throw new PrinterException("Wrong report template. Second line must contains article title");
         }
 
         // read first line of article content
         try {
             articleContent = templateReader.readLine() + "\n";
         } catch (IOException e) {
-            // @todo: move this message to error wrapper
-            throw new Exception("Wrong report template. Third line must contains article content");
+            throw new PrinterException("Wrong report template. Third line must contains article content");
         }
 
         // read other lines of article content
