@@ -124,7 +124,8 @@ public class ReportBuilder implements ISVNLogEntryHandler {
      * @param users list of users of commits
      */
     public void setUsers(String users[]) {
-        properties.getProperty("users") = StringUtils.join(users, ",");
+        properties.setProperty("users", StringUtils.join(users, ","));
+        this.users = null;
     }
 
     public void setPassword(String password) {
@@ -374,12 +375,11 @@ public class ReportBuilder implements ISVNLogEntryHandler {
 
     public Set<String> getUsers() {
         if (users == null) {
-            users = new HashSet<String>();
-            
             if (properties.getProperty("users") != null) {
                 users = new HashSet<String>(
-                    properties.getProperty("users").split(",")
-                );
+                    Arrays.asList(properties.getProperty("users").split(",")));
+            } else {
+                users = new HashSet<String>();
             }
         }
         
