@@ -374,13 +374,11 @@ public class ReportBuilder implements ISVNLogEntryHandler {
     }
 
     public Set<String> getUsers() {
-        if (users == null) {
-            if (properties.getProperty("users") != null) {
-                users = new HashSet<String>(
-                    Arrays.asList(properties.getProperty("users").split(",")));
-            } else {
-                users = new HashSet<String>();
-            }
+        users = new HashSet<String>();
+        
+        if (properties.getProperty("users") != null) {
+            users = new HashSet<String>(
+                Arrays.asList(properties.getProperty("users").split(",")));
         }
         
         return users;
