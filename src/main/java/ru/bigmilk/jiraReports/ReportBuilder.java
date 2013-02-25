@@ -66,11 +66,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         initPrinters();
         initCommandLineOptions();
 
-        loadConfig();
-
-        if (properties.getProperty("users") != null) {
-            setUsers(properties.getProperty("users").split(","));
-        }
+        loadConfig();        
     }
 
     /**
@@ -128,9 +124,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
      * @param users list of users of commits
      */
     public void setUsers(String users[]) {
-        this.users = new HashSet<String>(
-                Arrays.asList(users)
-        );
+        properties.getProperty("users") = StringUtils.join(users, ",");
     }
 
     public void setPassword(String password) {
@@ -379,6 +373,16 @@ public class ReportBuilder implements ISVNLogEntryHandler {
     }
 
     public Set<String> getUsers() {
+        if (users == null) {
+            users = new HashSet<String>();
+            
+            if (properties.getProperty("users") != null) {
+                users = new HashSet<String>(
+                    properties.getProperty("users").split(",")
+                );
+            }
+        }
+        
         return users;
     }
 
