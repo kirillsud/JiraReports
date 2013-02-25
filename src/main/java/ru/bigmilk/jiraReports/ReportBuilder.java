@@ -224,7 +224,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
         }
 
         if (line.getOptionValue('u') != null) {
-            properties.setProperty("users", line.getOptionValue('u'));
+            setUsers(line.getOptionValue('u').split(",");
         }
 
         if (line.getOptionValue('d') != null) {
