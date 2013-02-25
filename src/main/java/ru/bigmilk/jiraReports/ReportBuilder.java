@@ -228,7 +228,7 @@ public class ReportBuilder implements ISVNLogEntryHandler {
             properties.setProperty("jira.url", line.getOptionValue('j'));
         }
 
-        if (line.getOptionValue('a') != null) {
+        if (line.getOptionValue('u') != null) {
             properties.setProperty("users", line.getOptionValue('a'));
         }
 
